@@ -22,7 +22,13 @@ const combinedConfigs = merge({}, commonConfig, {
 	],
 	devServer: {
 		inline: true,
-		contentBase: "test-wwwroot"
+		contentBase: "test-wwwroot",
+		proxy: [{
+			path: '/geosyn/',
+			target: 'https://www.kegsys.com/',
+			secure: false,
+			changeOrigin: true
+		}]
 	},
 	mode: "development"
 });
