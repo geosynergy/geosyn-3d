@@ -57,5 +57,6 @@ module.exports = {
 		new CopyWebpackPlugin([{from: 'lib/potree/libs/other/BinaryHeap.js', to: 'BinaryHeap.js'}]),
 		new CopyWebpackPlugin([{from: path.join(potreeDir, 'workers'), to: 'workers'}]),
 		new CopyWebpackPlugin([{from: 'src/workers/terrainparser.js', to: 'workers/terrainparser.js'}]),
+		new CopyWebpackPlugin([{from: 'src/static', to: 'static'}]),
 	]
 }

@@ -33,10 +33,22 @@
 </div>
 <script type="text/javascript">
 	window.onload = function () {
-		console.log(dev)
-		let map3d = new dev.Geosyn3dMap('map-3d')
 
-		map3d.zoomToCoords([270619.609613174, 7016658.09007321], 1, 1000)
+		let map3d = new dev.Geosyn3dMap('map-3d', {
+			terrainOptions: {
+				geoserverUrl: '/geosyn/',
+				layerName: 'public:CLIP_28356',
+				srs: 'EPSG:28356'
+			},
+			imageryOptions: {
+				geoserverUrl: '/geosyn/',
+				layerName: 'public:grp_imagery',
+				srs: 'EPSG:28356'
+			}
+		})
+
+		// map3d.zoomToCoords([270619.609613174, 7016658.09007321], 1, 1000)
+		map3d.zoomToCoords([489094.442, 6954363.583], 1, 1000)
 	}
 </script>
 </body>

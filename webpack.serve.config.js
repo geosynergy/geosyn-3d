@@ -25,9 +25,11 @@ const combinedConfigs = merge({}, commonConfig, {
 		contentBase: "test-wwwroot",
 		proxy: [{
 			path: '/geosyn/',
-			target: 'https://www.kegsys.com/',
+			// target: 'https://www.kegsys.com/',
+			target: 'https://g3d.kegsys.com/',
 			secure: false,
-			changeOrigin: true
+			changeOrigin: true,
+			pathRewrite: {'^/geosyn' : ''}
 		}]
 	},
 	mode: "development"

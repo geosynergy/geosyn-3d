@@ -1,3 +1,7 @@
+//https://dwtkns.com/srtm30m/
+//http://gis-lab.info/qa/srtm.html
+//https://earthexplorer.usgs.gov/
+
 import BasePlane from './BasePlane'
 import mergeImages from 'merge-images'
 import getPixels from 'get-pixels'
@@ -18,8 +22,10 @@ export default  class Geosyn3dMap {
     this.MAX_Z = options.maxZ || 1200000
     this.BASE_Z = options.baseZ || -1000
 
-    this.drawTerrain = options.drawTerrain || true
-    this.geoserverUrl = options.geoserverUrl || '/geosyn/'
+    this.terrainOptions = options.terrainOptions
+    this.imageryOptions = options.imageryOptions
+
+    this.drawTerrain = !!this.imageryOptions
 
     this.tilesBuffer = []
     this.wmsLayers = []
@@ -93,6 +99,18 @@ export default  class Geosyn3dMap {
       // console.log(this.getCurrentFrustum())
     })
 
+    this.viewer.orbitControls.addEventListener('mousewheel', (e) => {
+      let zoom = Math.floor(this.getZoom())
+      if (zoom !== this.currentZoom) {
+        this.currentZoom = zoom
+        this.updateTiles()
+      }
+
+
+      this.updateCompass()
+      // console.log(this.getCurrentFrustum())
+    })
+
     /*setTimeout(() => {
       this.updateTiles()
       // this.updateCompass()
@@ -151,6 +169,7 @@ export default  class Geosyn3dMap {
         let s = this.terrainTileSize
 
         let texture = this.textureContainer[t.id]
+
         if (!texture) {
           return
         }
@@ -256,7 +275,7 @@ export default  class Geosyn3dMap {
     /*if (!tContainer.imageryTexture) {
       return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: false, opacity: 1, transparent: false})
     }*/
-    if (tileType === 'terrain') {
+    /*if (tileType === 'terrain') {
       return new THREE.MeshBasicMaterial({map: tContainer.imageryTexture, opacity: 0.65, transparent: true})
     } else {
       let texture = new THREE.TextureLoader()
@@ -264,7 +283,14 @@ export default  class Geosyn3dMap {
       // return new THREE.MeshBasicMaterial({map: texture, opacity: 0.65, transparent: true})
       return new THREE.MeshBasicMaterial({map: texture})
       // return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: false, opacity: 0, transparent: true})
-    }
+    }*/
+
+    // return new THREE.MeshBasicMaterial({map: tContainer.imageryTexture, opacity: 0.65, transparent: true})
+
+    return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, opacity: 1, transparent: true})
+    /*let texture =  new THREE.TextureLoader()
+        .load('/static/empty_tile.png')
+    return new THREE.MeshBasicMaterial({map: texture})*/
 
   }
 
@@ -293,7 +319,7 @@ export default  class Geosyn3dMap {
 
   getWmsCoverages (t, tileType) {
     return this.wmsLayers.filter(l => l.enabled).filter(l => l.tileType === tileType).map(layer => {
-      return `${this.geoserverUrl}wms?VERSION=1.1.1&FORMAT=image/png&REQUEST=GetMap&SRS=EPSG:28356&WIDTH=${this.imageryTileSize}&HEIGHT=${this.imageryTileSize}&TRANSPARENT=true&BBOX=${[t.x, t.y, t.x + t.tileSize, t.y + t.tileSize].join(',')}&LAYERS=${layer.name}${layer.cql ? '&cql_filter=' + layer.cql : ''}`
+      return `${layer.geoserverUrl}wms?VERSION=1.1.1&FORMAT=image/png&REQUEST=GetMap&SRS=${layer.srs}&WIDTH=${this.imageryTileSize}&HEIGHT=${this.imageryTileSize}&TRANSPARENT=true&BBOX=${[t.x, t.y, t.x + t.tileSize, t.y + t.tileSize].join(',')}&LAYERS=${layer.layerName}${layer.cql ? '&cql_filter=' + layer.cql : ''}`
     })
   }
 
@@ -561,10 +587,9 @@ export default  class Geosyn3dMap {
     if (index === -1) {
       return
     }
-    let url = `${this.geoserverUrl}wms?VERSION=1.1.1&FORMAT=image/png&REQUEST=GetMap&SRS=EPSG:28356&WIDTH=128&HEIGHT=128&TRANSPARENT=true&BBOX=${([t.x, t.y, t.x + tileSize, t.y + tileSize].join(','))}&LAYERS=public:sb_dem&tiled=true`
+    let url = `${this.terrainOptions.geoserverUrl.replace(/\/$/, "")}/wms?VERSION=1.1.1&FORMAT=application/bil32&REQUEST=GetMap&SRS=${this.terrainOptions.srs}&WIDTH=128&HEIGHT=128&BBOX=${([t.x, t.y, t.x + tileSize, t.y + tileSize].join(','))}&LAYERS=${this.terrainOptions.layerName}&tiled=true`
 
-
-    let tUrl = `${this.geoserverUrl}wms?VERSION=1.1.1&FORMAT=image/png&REQUEST=GetMap&SRS=EPSG:28356&WIDTH=512&HEIGHT=512&TRANSPARENT=true&BBOX=${([t.x, t.y, t.x + tileSize, t.y + tileSize].join(','))}&LAYERS=public:grp_imagery&tiled=true`
+    let tUrl = `${this.imageryOptions.geoserverUrl.replace(/\/$/, "")}/wms?VERSION=1.1.1&FORMAT=image/png&REQUEST=GetMap&SRS=${this.terrainOptions.srs}&WIDTH=512&HEIGHT=512&TRANSPARENT=true&BBOX=${([t.x, t.y, t.x + tileSize, t.y + tileSize].join(','))}&LAYERS=${this.imageryOptions.layerName}&tiled=true`
 
     // url = '/static/empty_tile.png'
     this.loadingTiles[t.id] = t
@@ -575,28 +600,43 @@ export default  class Geosyn3dMap {
           urls: [],
           t: t
         }
-        if (this.drawTerrain) {
-          let imageryTexture = new THREE.TextureLoader()
+        let imageryTexture = new THREE.TextureLoader()
             .load(tUrl, (err, resp) => {
               clb(null)
             })
-          this.textureContainer[t.id] = {
-            imageryTexture: imageryTexture,
-            urls: [tUrl],
-            t: t
-          }
-          this.textureContainer[t.id].imageryTexture = imageryTexture
-          this.textureContainer[t.id].urls.push(tUrl)
-        } else {
-          clb(null)
+        this.textureContainer[t.id] = {
+          imageryTexture: imageryTexture,
+          urls: [tUrl],
+          t: t
         }
+        this.textureContainer[t.id].imageryTexture = imageryTexture
+        this.textureContainer[t.id].urls.push(tUrl)
 
       },
       (clb) => {
         if (this.drawTerrain) {
-          getPixels(url, (err, pixels) => {
+          /*getPixels(url, (err, pixels) => {
             clb(null, pixels)
-          })
+          })*/
+          let oReq = new XMLHttpRequest();
+          oReq.open("GET", url, true);
+          oReq.responseType = "arraybuffer";
+          oReq.onload = function (oEvent) {
+            var arrayBuffer = oReq.response;
+
+            if (arrayBuffer) {
+              clb(null, arrayBuffer)
+            } else {
+              clb(null)
+            }
+          }
+
+          oReq.onerroe = function() {
+            clb(null)
+          }
+
+          oReq.send(null);
+
         } else {
           clb(null)
         }
@@ -608,9 +648,10 @@ export default  class Geosyn3dMap {
         })
       }*/
     ], (err, res) => {
+
       if (!err) {
-        if (this.drawTerrain) {
-          worker.postMessage([res[1], t, tileSize, this.terrainTileSize, 'terrain'])
+        if (res[1]) {
+          worker.postMessage([res[1], t, tileSize, this.terrainTileSize, 'raw'])
         }
 
         /*if (this.drawSubsurface) {
@@ -636,6 +677,65 @@ export default  class Geosyn3dMap {
     //   console.log(pixels.data[65536-382])
     //   })
 
+  }
+
+  /**
+   *
+   * @param options
+   * required params:
+   *  geoserverUrl (eg. /api/gs)
+   *  layerName (eg. public.terrain_layer)
+   *  srs (eg. EPSG:28356)
+   *
+   */
+
+  setTerrainOptions (options) {
+    if (!this.validateRequiredWmsOptions(options)) {
+      console.error('Terrain layer not set. Check options.')
+      return
+    }
+    this.terrainOptions = options
+  }
+
+  setImageryOptions (options) {
+    if (!this.validateRequiredWmsOptions(options)) {
+      console.error('Imagery layer not set. Check options.')
+      return
+    }
+    this.imageryOptions = options
+  }
+
+  addWmsLayer (options) {
+    if (!this.validateRequiredWmsOptions(options)) {
+      console.error('WMS layer not added. Check options.')
+      return
+    }
+    this.wmsLayers.push(options)
+  }
+
+  removeWmsLayer(name) {
+    let index = this.wmsLayers.map(_ => _.name).indexOf(name)
+    if (index > -1) {
+      this.wmsLayers.splice(index, 1)
+    }
+  }
+
+  validateRequiredWmsOptions (options) {
+    let valid = true
+    if (!options.layerName) {
+      console.error('Error: layerName not provided')
+      valid = false
+    }
+
+    if (!options.geoserverUrl) {
+      console.error('Error: geoserverUrl not provided')
+      valid = false
+    }
+
+    if (!options.srs) {
+      console.error('Error: srs not provided')
+      valid = false
+    }
   }
 
 
