@@ -189,7 +189,7 @@ export default  class Geosyn3dMap {
         let texture = new THREE.TextureLoader()
           .load(url)*/
 
-        let material = this.createMaterial(texture, tileType)
+        let material = this.createMaterial(texture, 'terrain')
         this.loadAllCoverage(texture, tileType)
 
         let geometry = new THREE.PlaneBufferGeometry(tileSize, tileSize, s - 1, s - 1)
@@ -275,7 +275,7 @@ export default  class Geosyn3dMap {
     /*if (!tContainer.imageryTexture) {
       return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: false, opacity: 1, transparent: false})
     }*/
-    /*if (tileType === 'terrain') {
+    if (tileType === 'terrain') {
       return new THREE.MeshBasicMaterial({map: tContainer.imageryTexture, opacity: 0.65, transparent: true})
     } else {
       let texture = new THREE.TextureLoader()
@@ -283,11 +283,12 @@ export default  class Geosyn3dMap {
       // return new THREE.MeshBasicMaterial({map: texture, opacity: 0.65, transparent: true})
       return new THREE.MeshBasicMaterial({map: texture})
       // return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: false, opacity: 0, transparent: true})
-    }*/
+    }
 
     // return new THREE.MeshBasicMaterial({map: tContainer.imageryTexture, opacity: 0.65, transparent: true})
 
-    return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, opacity: 1, transparent: true})
+    // return new THREE.MeshBasicMaterial({color: 0xffffff, wireframe: true, opacity: 1, transparent: true})
+
     /*let texture =  new THREE.TextureLoader()
         .load('/static/empty_tile.png')
     return new THREE.MeshBasicMaterial({map: texture})*/
