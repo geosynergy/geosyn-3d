@@ -23,7 +23,7 @@
     "eslint-plugin-standard": "^3.0.1",
     "gulp": "~3.5.2",
     "gulp-concat": "~2.1.7",
-    "gulp-connect": "^2.3.1",
+    "gulp-connect": "^5.7.0",
     "gulp-jshint": "^2.0.4",
     "gulp-rename": "~1.0.0",
     "gulp-size": "^2.1.0",
